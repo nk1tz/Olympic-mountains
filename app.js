@@ -1,4 +1,4 @@
-const VER=20;let EL=false,ELS="loading",ELE="";const $=s=>document.querySelector(s),f=n=>Math.round(n).toLocaleString("en");
+const VER=21;let EL=false,ELS="loading",ELE="";const $=s=>document.querySelector(s),f=n=>Math.round(n).toLocaleString("en");
 const near=k=>P.reduce((a,b)=>Math.abs(b[3]-k)<Math.abs(a[3]-k)?b:a);
 const seg=(a,b)=>P.filter(p=>p[3]>=a&&p[3]<=b).map(p=>[p[0],p[1]]);
 const map=L.map("map",{zoomControl:false});
