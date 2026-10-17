@@ -1,4 +1,4 @@
-const VER=19;let EL=false,ELS="loading",ELE="";const $=s=>document.querySelector(s),f=n=>Math.round(n).toLocaleString("en");
+const VER=20;let EL=false,ELS="loading",ELE="";const $=s=>document.querySelector(s),f=n=>Math.round(n).toLocaleString("en");
 const near=k=>P.reduce((a,b)=>Math.abs(b[3]-k)<Math.abs(a[3]-k)?b:a);
 const seg=(a,b)=>P.filter(p=>p[3]>=a&&p[3]<=b).map(p=>[p[0],p[1]]);
 const map=L.map("map",{zoomControl:false});
@@ -70,7 +70,7 @@ map.on("contextmenu",e=>{onFix({latlng:e.latlng,accuracy:15,altitude:null});toas
 const sum=k=>D.reduce((a,d)=>a+d[k],0);
 function show(i){cur=i;document.querySelectorAll("#tabs button").forEach((b,j)=>b.setAttribute("aria-selected",j==i));hl.clearLayers();hll.clearLayers();let h;
  if(!i){map.fitBounds(all.getBounds(),{padding:[20,20]});
-  h=`<h2>High Divide and Appleton Pass Loop</h2><small>${D.length} days, Olympic Mountains, summer 2027</small><div class="stats"><div><b>${P[P.length-1][3].toFixed(1)} km</b><span>distance</span></div><div><b>+${U(sum("up"))} m</b><span>gain</span></div><div><b>−${U(sum("dn"))} m</b><span>loss</span></div><div><b>${hm(D.reduce((a,d)=>a+hrs(d.a,d.b,d),0))}</b><span>est. time</span></div></div>`+D.map((d,j)=>`<div class="stop" onclick="show(${j+1})"><i style="background:${d.c};color:#111">${j+1}</i><div><b>${d.t}</b><p><small>${d.km} km, +${U(d.up)} m, −${U(d.dn)} m, about ${hm(hrs(d.a,d.b,d))}</small></p></div></div>`).join("")}
+  h=`<h2>High Divide and Appleton Pass Loop</h2><small>${D.length} days in the Olympic Mountains</small><div class="stats"><div><b>${P[P.length-1][3].toFixed(1)} km</b><span>distance</span></div><div><b>+${U(sum("up"))} m</b><span>gain</span></div><div><b>−${U(sum("dn"))} m</b><span>loss</span></div><div><b>${hm(D.reduce((a,d)=>a+hrs(d.a,d.b,d),0))}</b><span>est. time</span></div></div>`+D.map((d,j)=>`<div class="stop" onclick="show(${j+1})"><i style="background:${d.c};color:#111;width:auto;padding:0 10px;border-radius:12px;white-space:nowrap">Day ${j+1}</i><div><b>${d.t}</b><p><small>${d.km} km, +${U(d.up)} m, −${U(d.dn)} m, about ${hm(hrs(d.a,d.b,d))}</small></p></div></div>`).join("")}
  else{const d=D[i-1];const line=L.polyline(seg(d.a,d.b),{color:"#ffffff",weight:10,opacity:.9}).addTo(hll);all.bringToFront();
   L.polyline(seg(d.a,d.b),{color:"#0b2a12",weight:8}).addTo(hll);L.polyline(seg(d.a,d.b),{color:d.c,weight:4}).addTo(hll);map.fitBounds(line.getBounds(),{padding:[30,30]});
   d.st.forEach((q,j)=>{const p=near(q[0]);L.marker([p[0],p[1]],{icon:L.divIcon({className:"",html:`<div class="mk ${kd(d,j)}">${SY[kd(d,j)]}</div>`,iconSize:[28,28]})}).bindPopup(`<b>${q[1]}</b><br>${q[2]}`).addTo(hl)});
