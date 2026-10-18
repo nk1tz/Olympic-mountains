@@ -1,4 +1,4 @@
-const A="app-v23",T="tiles-v1",F=["./","index.html","app.js","data.js","manifest.json","icon-192.png","icon-512.png","lib/leaflet.js","lib/leaflet.css","lib/images/marker-icon.png","lib/images/layers.png"];
+const A="app-v24",T="tiles-v1",F=["./","index.html","app.js","data.js","manifest.json","icon-192.png","icon-512.png","lib/leaflet.js","lib/leaflet.css","lib/images/marker-icon.png","lib/images/layers.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(A).then(c=>c.addAll(F)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!=A&&n!=T).map(n=>caches.delete(n)))));self.clients.claim()});
 self.addEventListener("fetch",e=>{const u=e.request.url;
