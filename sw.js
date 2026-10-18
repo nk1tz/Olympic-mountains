@@ -1,4 +1,4 @@
-const V=22,A="hdl-app-v"+V,T="hdl-tiles-v1",F=["./","index.html","app.js?v="+V,"data.js?v="+V,"manifest.json","icon-192.png","icon-512.png","lib/leaflet.js","lib/leaflet.css"];
+const V=24,A="hdl-app-v"+V,T="hdl-tiles-v1",F=["./","index.html","app.js?v="+V,"data.js?v="+V,"manifest.json","icon-192.png","icon-512.png","lib/leaflet.js","lib/leaflet.css"];
 // Precache with cache:"reload" so a deploy made minutes ago is not served from the HTTP cache (GitHub Pages sends max-age=600).
 self.addEventListener("install",e=>{e.waitUntil(caches.open(A).then(c=>c.addAll(F.map(u=>new Request(u,{cache:"reload"})))));self.skipWaiting()});
 // Only touch this app's own caches ("hdl-"); other sites on the same origin keep theirs.

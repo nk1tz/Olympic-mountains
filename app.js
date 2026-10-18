@@ -1,4 +1,7 @@
-const VER=22,TILES="hdl-tiles-v1";const $=s=>document.querySelector(s),f=n=>Math.round(n).toLocaleString("en"),esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const VER=24,TILES="hdl-tiles-v1";const $=s=>document.querySelector(s),f=n=>Math.round(n).toLocaleString("en"),esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const IC={start:'<path d="M8 5v14l11-7z"/>',flag:'<path d="M5 3h2v18H5zM8 4h10l-2.5 4 2.5 4H8z"/>',tent:'<path d="M12 3L2 20h20L12 3zm0 7l5 8h-3.3L12 15.2 10.3 18H7l5-8z"/>',star:'<path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.7 7-6.3-3.8-6.3 3.8 1.7-7L2 9.5l7.1-.6z"/>',drop:'<path d="M12 2.5c3.2 4.2 6 7.6 6 11a6 6 0 0 1-12 0c0-3.4 2.8-6.8 6-11z"/>',mtn:'<path d="M2 20l7-12 4 6.5 2.5-3.5L22 20z"/>',locate:'<path d="M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM11 1h2v4h-2zM11 19h2v4h-2zM1 11h4v2H1zM19 11h4v2h-4z"/><circle cx="12" cy="12" r="2"/>',route:'<path d="M3 18c3-9 6 4 9-4s6-3 9-9" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',sun:'<circle cx="12" cy="12" r="4.5"/><path d="M11 1h2v3h-2zM11 20h2v3h-2zM1 11h3v2H1zM20 11h3v2h-3zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4zM16.3 17.7l1.4-1.4 2.1 2.1-1.4 1.4zM4.2 18.4l2.1-2.1 1.4 1.4-2.1 2.1zM16.3 6.3l2.1-2.1 1.4 1.4-2.1 2.1z"/>'};
+const ic=(n,s=16)=>`<svg class="ic" viewBox="0 0 24 24" width="${s}" height="${s}" fill="currentColor" fill-rule="evenodd" aria-hidden="true">${IC[n]}</svg>`,IK={s:"start",e:"flag",c:"tent",p:"star"};
+const RM=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
 const near=k=>P.reduce((a,b)=>Math.abs(b[3]-k)<Math.abs(a[3]-k)?b:a);
 const seg=(a,b)=>P.filter(p=>p[3]>=a&&p[3]<=b).map(p=>[p[0],p[1]]);
 const map=L.map("map",{zoomControl:false});
@@ -6,6 +9,7 @@ map.setView([P[0][0],P[0][1]],12);
 L.control.zoom({position:"bottomright"}).addTo(map);
 // maxNativeZoom matches the offline download (zoom 11 to 15); past 15 Leaflet scales the saved tiles instead of showing a blank map.
 L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,maxNativeZoom:15,subdomains:"abc",attribution:"© OpenTopoMap, © OSM"}).addTo(map);
+const fly=(b,o)=>RM?map.fitBounds(b,o):map.flyToBounds(b,{...o,duration:.8}),goTo=(a,b)=>RM?map.setView([a,b],15):map.flyTo([a,b],15,{duration:.7});
 const rl=L.layerGroup().addTo(map),hll=L.layerGroup().addTo(map);
 L.polyline(seg(0,99),{color:"#0b2a12",weight:8,opacity:.85}).addTo(rl);
 const all=L.polyline(seg(0,99),{opacity:0,weight:0,interactive:false}).addTo(map);
@@ -14,10 +18,11 @@ const hl=L.layerGroup().addTo(map),water=L.layerGroup().addTo(map);
 map.fitBounds(all.getBounds(),{padding:[20,20]});
 // water (W comes from data.js, looked up once from OpenStreetMap)
 let WP=[],lastLL=null;
-W.forEach(w=>{L.marker([w.lat,w.lng],{icon:L.divIcon({className:"wat",html:"💧",iconSize:[20,20]})}).bindPopup(esc(w.n)+"<br><small>"+w.d+" m from the trail. Treat all water before drinking.</small>").addTo(water);WP.push({km:w.km,name:w.n,off:w.d})});
+W.forEach(w=>{L.marker([w.lat,w.lng],{icon:L.divIcon({className:"",html:`<div class="mk w">${ic("drop",13)}</div>`,iconSize:[24,24]})}).bindPopup(esc(w.n)+"<br><small>"+w.d+" m from the trail. Treat all water before drinking.</small>").addTo(water);WP.push({km:w.km,name:w.n,off:w.d})});
 WP.sort((a,b)=>a.km-b.km);WP=WP.filter((w,i)=>!i||w.km-WP[i-1].km>.15);
 let lOn=true;$("#lns").onclick=()=>{lOn=!lOn;[rl,hll].forEach(g=>lOn?g.addTo(map):g.remove());$("#lns").style.opacity=lOn?1:.45};
 let wOn=true;$("#wtr").onclick=()=>{wOn=!wOn;wOn?water.addTo(map):water.remove();$("#wtr").style.opacity=wOn?1:.45};
+$("#loc").innerHTML=ic("locate",22);$("#wtr").innerHTML=ic("drop",20);$("#wtr").style.color="#1e88e5";$("#lns").innerHTML=ic("route",22);$("#elv").innerHTML=ic("mtn",14)+" <small>waiting for GPS</small>";
 function toast(t,ms){const e=$("#toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",ms||4000)}
 // compass (true north) and elevation
 const DECL=15;// approx. magnetic declination, degrees east, Olympic Peninsula
@@ -29,7 +34,7 @@ let cmpOn=false;async function startCmp(){if(cmpOn)return;try{if(typeof DeviceOr
  addEventListener("deviceorientationabsolute",onOri,true);addEventListener("deviceorientation",onOri,true);cmpOn=true;setTimeout(()=>{if($("#hd").textContent=="–°")toast("No compass sensor found. It works on a phone.")},3000)}catch(_){toast("Compass unavailable on this device.")}}
 $("#cmp").onclick=startCmp;if(!(typeof DeviceOrientationEvent!="undefined"&&DeviceOrientationEvent.requestPermission))startCmp();
 function routeElev(ll){let best=null;const c=Math.cos(ll.lat*Math.PI/180);for(let i=0;i<P.length-1;i++){const A=P[i],B=P[i+1],ax=(A[1]-ll.lng)*c,ay=A[0]-ll.lat,dx=(B[1]-A[1])*c,dy=B[0]-A[0],l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/l)):0,d=Math.hypot(ax+t*dx,ay+t*dy)*111320;if(!best||d<best.d)best={d,e:A[2]+t*(B[2]-A[2]),km:A[3]+t*(B[3]-A[3])}}return best}
-function updElev(e){const r=routeElev(e.latlng);let t;if(r.d<50)t=f(r.e)+" m <small>on trail</small>";else if(e.altitude!=null)t="≈"+f(e.altitude)+" m <small>GPS, approx.</small>";else t="<small>Elevation unavailable</small>";$("#elv").innerHTML="⛰ "+t}
+function updElev(e){const r=routeElev(e.latlng);let t;if(r.d<50)t=f(r.e)+" m <small>on trail</small>";else if(e.altitude!=null)t="≈"+f(e.altitude)+" m <small>GPS, approx.</small>";else t="<small>Elevation unavailable</small>";$("#elv").innerHTML=ic("mtn",14)+" "+t}
 // location
 let me,acc,first=true;
 function onFix(e){const ll=e.latlng;updElev(e);updProg(e.latlng);me?(me.setLatLng(ll),acc.setLatLng(ll).setRadius(e.accuracy)):(acc=L.circle(ll,{radius:e.accuracy,weight:1,color:"#2b7fff",fillOpacity:.12}).addTo(map),me=L.circleMarker(ll,{radius:8,color:"#fff",weight:3,fillColor:"#2b7fff",fillOpacity:1}).addTo(map));
@@ -40,34 +45,53 @@ $("#loc").onclick=()=>me?map.setView(me.getLatLng(),Math.max(map.getZoom(),15)):
 // sheet
 const tabs=["All",...D.map((_,i)=>"Day "+(i+1))];
 $("#tabs").innerHTML=tabs.map((n,i)=>`<button role="tab" onclick="show(${i})">${n}</button>`).join("");
-function prof(d){const q=P.filter(p=>p[3]>=d.a&&p[3]<=d.b),lo=Math.min(...q.map(p=>p[2]))-30,hi=Math.max(...q.map(p=>p[2]))+30,W=320,H=110;
- const x=k=>8+(k-d.a)/(d.b-d.a)*(W-16),y=e=>H-16-(e-lo)/(hi-lo)*(H-30);
- return `<svg class="pr" viewBox="0 0 ${W} ${H}"><path d="M${x(d.a)},${H-16} ${q.map(p=>`L${x(p[3]).toFixed(1)},${y(p[2]).toFixed(1)}`).join(" ")} L${x(d.b)},${H-16}Z" fill="${d.c}" fill-opacity=".25" stroke="${d.c}" stroke-width="2"/><text x="8" y="${H-3}" font-size="9" fill="var(--mut)">${f(lo+30)} to ${f(hi-30)} m, ${d.a.toFixed(1)} to ${d.b.toFixed(1)} km</text></svg>`}
+const PW=320,PH=140,PL=38,PR=10,PT=10,PB=22;
+function prof(d){
+ const q=P.filter(p=>p[3]>=d.a&&p[3]<=d.b),lo=Math.floor((Math.min(...q.map(p=>p[2]))-15)/50)*50,hi=Math.ceil((Math.max(...q.map(p=>p[2]))+15)/50)*50,x=k=>PL+(k-d.a)/(d.b-d.a)*(PW-PL-PR),y=e=>PH-PB-(e-lo)/(hi-lo)*(PH-PB-PT),pts=q.map(p=>x(p[3]).toFixed(1)+","+y(p[2]).toFixed(1)).join(" ");
+ const grid=[0,1,2].map(g=>{const e=lo+(hi-lo)*g/2;return`<line x1="${PL}" x2="${PW-PR}" y1="${y(e)}" y2="${y(e)}" stroke="var(--line)"/><text x="${PL-4}" y="${y(e)+3}" text-anchor="end" font-size="8" fill="var(--mut)">${f(e)} m</text>`}).join("");
+ const xt=[0,.5,1].map(t=>{const k=d.a+(d.b-d.a)*t;return`<text x="${x(k)}" y="${PH-7}" text-anchor="${t?t==1?"end":"middle":"start"}" font-size="8" fill="var(--mut)">${k.toFixed(1)} km</text>`}).join("");
+ const dots=d.st.map((s,j)=>{const k=kd(d,j);return`<circle cx="${x(s[0])}" cy="${y(near(s[0])[2])}" r="4.5" fill="${{s:"#d32f2f",e:"#d32f2f",c:"#1e6fe0",p:"#f5a623"}[k]}" stroke="#fff" stroke-width="1.5"/>`}).join("");
+ return`<svg class="pr" viewBox="0 0 ${PW} ${PH}" data-lo="${lo}" data-hi="${hi}">${grid}<path d="M${x(d.a)},${y(lo)} L${pts.replace(/ /g," L")} L${x(d.b)},${y(lo)}Z" fill="${d.c}" fill-opacity=".3"/><polyline points="${pts}" fill="none" stroke="#0b2a12" stroke-width="4" stroke-linejoin="round"/><polyline points="${pts}" fill="none" stroke="${d.c}" stroke-width="2" stroke-linejoin="round"/>${xt}${dots}<line id="pl" y1="${PT}" y2="${PH-PB}" stroke="var(--fg)" stroke-dasharray="3 2" style="display:none"/><circle id="pc" r="5" fill="${d.c}" stroke="#fff" stroke-width="2" style="display:none"/></svg><p id="pro" class="pro"><small>Touch or drag along the graph to follow the route on the map.</small></p>`}
+function wireProf(d){const sv=$("#body svg.pr");if(!sv)return;const q=P.filter(p=>p[3]>=d.a&&p[3]<=d.b),lo=+sv.dataset.lo,hi=+sv.dataset.hi,pl=sv.querySelector("#pl"),pc=sv.querySelector("#pc"),ro=$("#pro");let mk=null;
+ const x=k=>PL+(k-d.a)/(d.b-d.a)*(PW-PL-PR),y=e=>PH-PB-(e-lo)/(hi-lo)*(PH-PB-PT);
+ const mv=e=>{const r=sv.getBoundingClientRect();if(!r.width)return;const vx=(e.clientX-r.left)/r.width*PW,k=Math.max(d.a,Math.min(d.b,d.a+(vx-PL)/(PW-PL-PR)*(d.b-d.a))),p=q.reduce((a,b)=>Math.abs(b[3]-k)<Math.abs(a[3]-k)?b:a),ll=L.latLng(p[0],p[1]);
+  pl.setAttribute("x1",x(p[3]));pl.setAttribute("x2",x(p[3]));pc.setAttribute("cx",x(p[3]));pc.setAttribute("cy",y(p[2]));pl.style.display=pc.style.display="";
+  ro.innerHTML=`<b>${(p[3]-d.a).toFixed(1)} km</b> into the day · ${f(p[2])} m · ${(d.b-p[3]).toFixed(1)} km to go`;
+  mk?mk.setLatLng(ll):mk=L.circleMarker(ll,{radius:9,color:"#fff",weight:3,fillColor:d.c,fillOpacity:1}).addTo(hl);
+  if(!map.getBounds().contains(ll))map.panTo(ll)};
+ sv.addEventListener("pointerdown",e=>{try{sv.setPointerCapture(e.pointerId)}catch(_){}mv(e)});sv.addEventListener("pointermove",mv)}
+// draggable panel
+const SNAP=[20,45,85],nearest=v=>SNAP.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);let sh=+localStorage.sheetH||45,dragging=false,moved=false;
+function setSh(v,anim){sh=v;document.documentElement.style.setProperty("--sh",v+"%");if(!anim)map.invalidateSize()}
+function snapTo(t){const h=document.documentElement;h.classList.add("snap");setSh(t,true);try{localStorage.sheetH=t}catch(_){}let n=0;const iv=setInterval(()=>{map.invalidateSize();if(++n>8){clearInterval(iv);h.classList.remove("snap")}},40)}
+{const gb=$("#grab");gb.addEventListener("pointerdown",e=>{dragging=true;moved=false;try{gb.setPointerCapture(e.pointerId)}catch(_){}});
+ gb.addEventListener("pointermove",e=>{if(!dragging)return;moved=true;setSh(Math.max(14,Math.min(90,(innerHeight-e.clientY)/innerHeight*100)),false)});
+ const up=()=>{if(!dragging)return;dragging=false;snapTo(moved?nearest(sh):SNAP[(SNAP.indexOf(nearest(sh))+1)%SNAP.length])};gb.addEventListener("pointerup",up);gb.addEventListener("pointercancel",up);setSh(SNAP.includes(sh)?sh:45,false)}
 const SY={s:"▶",e:"⚑",c:"⛺",p:"★"},kd=(d,j)=>j==0?"s":j==d.st.length-1?"e":d.st[j][3]?"c":"p";
 const today=()=>{const t=new Date();return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")},sdv=()=>localStorage.sd||today();
 const MUL={r:1.4,n:1,f:.8};let cur=0;
-const gain=(a,b)=>{let up=0,ref=null;P.forEach(p=>{if(p[3]<a||p[3]>b)return;if(ref==null)ref=p[2];const df=p[2]-ref;if(df>=4){up+=df;ref=p[2]}else if(df<=-4)ref=p[2]});return up};
-const hrs=(a,b)=>((b-a)/5+gain(a,b)/600)*MUL[localStorage.pace||"r"];
+const gainRaw=(a,b)=>{let up=0,ref=null;P.forEach(p=>{if(p[3]<a||p[3]>b)return;if(ref==null)ref=p[2];const df=p[2]-ref;if(df>=4){up+=df;ref=p[2]}else if(df<=-4)ref=p[2]});return up};
+const gain=gainRaw,hrs=(a,b)=>((b-a)/5+gain(a,b)/600)*MUL[localStorage.pace||"r"];
+D.forEach(d=>{d.up=gainRaw(d.a,d.b);d.dn=Math.max(0,d.up-(near(d.b)[2]-near(d.a)[2]))});
 const hm=h=>{const m=Math.round(h*60/5)*5;return Math.floor(m/60)+" h "+String(m%60).padStart(2,"0")+" m"};
-D.forEach(d=>{d.up=gain(d.a,d.b);d.dn=Math.max(0,d.up-(near(d.b)[2]-near(d.a)[2]))});
 function sun(ms,lat,lon){const r=Math.PI/180,jd=ms/864e5+2440587.5,n=Math.ceil(jd-2451545+8e-4),Js=n-lon/360,M=(357.5291+.98560028*Js)%360,C=1.9148*Math.sin(M*r)+.02*Math.sin(2*M*r)+3e-4*Math.sin(3*M*r),lam=(M+C+180+102.9372)%360,Jt=2451545+Js+.0053*Math.sin(M*r)-.0069*Math.sin(2*lam*r),dl=Math.asin(Math.sin(lam*r)*Math.sin(23.4397*r)),w=Math.acos((Math.sin(-.833*r)-Math.sin(lat*r)*Math.sin(dl))/(Math.cos(lat*r)*Math.cos(dl)))/r/360;return[(Jt-w-2440587.5)*864e5,(Jt+w-2440587.5)*864e5]}
-function sunLine(i){const sd=sdv();const[a,b]=sun(Date.parse(sd)+(i-1)*864e5,P[0][0],P[0][1]),t=x=>new Date(x).toLocaleTimeString("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"2-digit"});return`<p style="margin:6px 0"><small>☀ Sunrise ${t(a)} · Sunset ${t(b)} · ${hm((b-a)/36e5)} of daylight</small></p>`}
+function sunLine(i){const sd=sdv();const[a,b]=sun(Date.parse(sd)+(i-1)*864e5,P[0][0],P[0][1]),t=x=>new Date(x).toLocaleTimeString("en-US",{timeZone:"America/Los_Angeles",hour:"numeric",minute:"2-digit"});return`<p style="margin:6px 0"><small>${ic("sun",14)} Sunrise ${t(a)} · Sunset ${t(b)} · ${hm((b-a)/36e5)} of daylight</small></p>`}
 function updProg(ll){lastLL=ll;const r=routeElev(ll),el=$("#prg");el.style.display="block";
  if(r.d>100){el.innerHTML="<small>Off the trail ("+f(r.d)+" m away). Progress shows when you're on it.</small>";return}
  const d=D.find(x=>r.km>=x.a&&r.km<=x.b)||D[D.length-1],w=WP.find(x=>x.km>r.km+.05);
- el.innerHTML=`<b>Day ${D.indexOf(d)+1}</b> · ${(r.km-d.a).toFixed(1)} km done, ${(d.b-r.km).toFixed(1)} km left<br><small>↑ ${f(gain(r.km,d.b))} m to climb · about ${hm(hrs(r.km,d.b))} left today</small>`+(WP.length?`<br><small>💧 ${w?`${esc(w.name)} in ${(w.km-r.km).toFixed(1)} km`+(w.off>30?`, ${f(w.off)} m off trail`:""):"No mapped water ahead"}</small>`:"")}
+ el.innerHTML=`<b>Day ${D.indexOf(d)+1}</b> · ${(r.km-d.a).toFixed(1)} km done, ${(d.b-r.km).toFixed(1)} km left<br><small>↑ ${f(gain(r.km,d.b,d))} m to climb · about ${hm(hrs(r.km,d.b,d))} left today</small>`+(WP.length?`<br><small><span style="color:#1e88e5">${ic("drop",12)}</span> ${w?`${esc(w.name)} in ${(w.km-r.km).toFixed(1)} km`+(w.off>30?`, ${f(w.off)} m off trail`:""):"No mapped water ahead"}</small>`:"")}
 // Test location: only when the page is opened with ?test, so a long press on the map cannot replace the real GPS fix on the trail.
 if(/[?&]test/.test(location.search))map.on("contextmenu",e=>{onFix({latlng:e.latlng,accuracy:15,altitude:null});toast("Test location set. Right-click or long-press the map to move it.")});
 const sum=k=>D.reduce((a,d)=>a+d[k],0);
 function show(i){cur=i;document.querySelectorAll("#tabs button").forEach((b,j)=>b.setAttribute("aria-selected",j==i));hl.clearLayers();hll.clearLayers();let h;
- if(!i){map.fitBounds(all.getBounds(),{padding:[20,20]});
-  h=`<h2>High Divide and Appleton Pass Loop</h2><small>${D.length} days in the Olympic Mountains</small><div class="stats"><div><b>${P[P.length-1][3].toFixed(1)} km</b><span>distance</span></div><div><b>+${f(sum("up"))} m</b><span>gain</span></div><div><b>−${f(sum("dn"))} m</b><span>loss</span></div><div><b>${hm(D.reduce((a,d)=>a+hrs(d.a,d.b),0))}</b><span>est. time</span></div></div>`+D.map((d,j)=>`<div class="stop" onclick="show(${j+1})"><i style="background:${d.c};color:#111;width:auto;padding:0 10px;border-radius:12px;white-space:nowrap">Day ${j+1}</i><div><b>${d.t}</b><p><small>${d.km} km, +${f(d.up)} m, −${f(d.dn)} m, about ${hm(hrs(d.a,d.b))}</small></p></div></div>`).join("")}
+ if(!i){fly(all.getBounds(),{padding:[20,20]});
+  h=`<h2>High Divide and Appleton Pass Loop</h2><small>${D.length} days in the Olympic Mountains</small><div class="stats"><div><b>${P[P.length-1][3].toFixed(1)} km</b><span>distance</span></div><div><b>+${f(sum("up"))} m</b><span>gain</span></div><div><b>−${f(sum("dn"))} m</b><span>loss</span></div><div><b>${hm(D.reduce((a,d)=>a+hrs(d.a,d.b,d),0))}</b><span>est. time</span></div></div>`+D.map((d,j)=>`<div class="stop" onclick="show(${j+1})"><i style="background:${d.c};color:#111;width:auto;padding:0 10px;border-radius:12px;white-space:nowrap">Day ${j+1}</i><div><b>${d.t}</b><p><small>${d.km} km, +${f(d.up)} m, −${f(d.dn)} m, about ${hm(hrs(d.a,d.b,d))}</small></p></div></div>`).join("")}
  else{const d=D[i-1];const line=L.polyline(seg(d.a,d.b),{color:"#ffffff",weight:10,opacity:.9}).addTo(hll);all.bringToFront();
-  L.polyline(seg(d.a,d.b),{color:"#0b2a12",weight:8}).addTo(hll);L.polyline(seg(d.a,d.b),{color:d.c,weight:4}).addTo(hll);map.fitBounds(line.getBounds(),{padding:[30,30]});
-  d.st.forEach((q,j)=>{const p=near(q[0]);L.marker([p[0],p[1]],{icon:L.divIcon({className:"",html:`<div class="mk ${kd(d,j)}">${SY[kd(d,j)]}</div>`,iconSize:[28,28]})}).bindPopup(`<b>${q[1]}</b><br>${q[2]}`).addTo(hl)});
-  h=`<h2 style="border-left:6px solid ${d.c};padding-left:8px">Day ${i}: ${d.t}</h2><p>${d.d}</p><div class="stats"><div><b>${d.km} km</b><span>distance</span></div><div><b>+${f(d.up)} m</b><span>gain</span></div><div><b>−${f(d.dn)} m</b><span>loss</span></div><div><b>${hm(hrs(d.a,d.b))}</b><span>est. time</span></div></div>`+sunLine(i)+prof(d)+`<div class="leg"><span><b style="color:#d32f2f">▶</b> Start</span><span><b style="color:#d32f2f">⚑</b> End Of Day</span><span><b style="color:#1e6fe0">⛺</b> Campsite</span><span><b style="color:#f5a623">★</b> Point Of Interest</span></div>`+d.st.map((q,j)=>{const p=near(q[0]);return `<div class="stop ${kd(d,j)}" onclick="map.setView([${p[0]},${p[1]}],15)"><i>${SY[kd(d,j)]}</i><div><b>${q[1]}</b> <small>${q[0].toFixed(1)} km${q[0]>d.a+.05?" · "+hm(hrs(d.a,q[0]))+" in":""}</small><p>${q[2]}</p></div></div>`}).join("")}
+  L.polyline(seg(d.a,d.b),{color:"#0b2a12",weight:8}).addTo(hll);L.polyline(seg(d.a,d.b),{color:d.c,weight:4}).addTo(hll);fly(line.getBounds(),{padding:[30,30]});
+  d.st.forEach((q,j)=>{const p=near(q[0]);L.marker([p[0],p[1]],{icon:L.divIcon({className:"",html:`<div class="mk ${kd(d,j)}">${ic(IK[kd(d,j)],kd(d,j)=="s"||kd(d,j)=="e"?18:15)}</div>`,iconSize:[28,28]})}).bindPopup(`<b>${q[1]}</b><br>${q[2]}`).addTo(hl)});
+  h=`<h2 style="border-left:6px solid ${d.c};padding-left:8px">Day ${i}: ${d.t}</h2><p>${d.d}</p><div class="stats"><div><b>${d.km} km</b><span>distance</span></div><div><b>+${f(d.up)} m</b><span>gain</span></div><div><b>−${f(d.dn)} m</b><span>loss</span></div><div><b>${hm(hrs(d.a,d.b,d))}</b><span>est. time</span></div></div>`+sunLine(i)+prof(d)+`<div class="leg"><span><b style="color:#d32f2f">${ic("start",14)}</b> Start</span><span><b style="color:#d32f2f">${ic("flag",14)}</b> End Of Day</span><span><b style="color:#1e6fe0">${ic("tent",14)}</b> Campsite</span><span><b style="color:#f5a623">${ic("star",14)}</b> Point Of Interest</span></div>`+d.st.map((q,j)=>{const p=near(q[0]);return `<div class="stop ${kd(d,j)}" onclick="goTo(${p[0]},${p[1]})"><i>${ic(IK[kd(d,j)],kd(d,j)=="s"||kd(d,j)=="e"?15:13)}</i><div><b>${q[1]}</b> <small>${q[0].toFixed(1)} km${q[0]>d.a+.05?" · "+hm(hrs(d.a,q[0],d))+" in":""}</small><p>${q[2]}</p></div></div>`}).join("")}
  h+=`<details id="wx"><summary>Trip date, weather and offline map</summary><p><label>Trip start date <input type="date" id="sd"></label></p><p><label>Pace <select id="pc"><option value="r">Relaxed</option><option value="n">Normal</option><option value="f">Fast</option></select></label> <small>Times use Naismith's rule (5 km/h plus 1 h per 600 m climbed), scaled by pace.</small></p><div id="wo"><small>Forecasts only exist about 16 days ahead, so set the date closer to the trip.</small></div><p><button class="btn" id="dl" style="width:100%">Save map for offline use</button><small id="dls"></small></p><p><small>On iPhone, add the app to the Home Screen first, then save the map from there. The Home Screen app keeps its own saved data.</small></p><p><small>Elevation: AWS Terrain Tiles (USGS and NASA SRTM data). Water: OpenStreetMap. App version ${VER}</small></p></details>`;
- $("#body").innerHTML=h;$("#body").scrollTop=0;wx(i);$("#dl").onclick=dl;const pc=$("#pc");pc.value=localStorage.pace||"r";pc.onchange=()=>{localStorage.pace=pc.value;show(cur);$("#wx").open=true;if(lastLL)updProg(lastLL)}}
+ $("#body").innerHTML=h;$("#body").scrollTop=0;{const b=$("#body");b.classList.remove("fx");void b.offsetWidth;b.classList.add("fx")}wx(i);if(i)wireProf(D[i-1]);$("#dl").onclick=dl;const pc=$("#pc");pc.value=localStorage.pace||"r";pc.onchange=()=>{localStorage.pace=pc.value;show(cur);$("#wx").open=true;if(lastLL)updProg(lastLL)}}
 // weather (tucked away). The last good forecast is kept so it still shows at the trailhead without signal.
 function wx(i){const sd=$("#sd");sd.value=sdv();sd.onchange=()=>{localStorage.sd=sd.value;show(i);$("#wx").open=true};
  if(!sd.value)return;const s=new Date(sd.value),end=new Date(s.getTime()+(D.length-1)*864e5).toISOString().slice(0,10);if((s-new Date())/864e5+D.length-1>15){$("#wo").innerHTML="<small>Too far ahead for a forecast. Check back within 16 days of the trip.</small>";return}
